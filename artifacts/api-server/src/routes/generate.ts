@@ -140,36 +140,58 @@ router.post("/generate", async (req, res) => {
       return;
     }
 
-    let buffer = "";
+    let contentBuffer = "";
+    let lineCarryover = "";
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
+        // Append carryover from previous chunk before splitting
+        const chunk = lineCarryover + decoder.decode(value, { stream: true });
         const lines = chunk.split("\n");
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
+        // The last element may be an incomplete line — carry it forward
+        lineCarryover = lines.pop() ?? "";
 
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                buffer += content;
-                res.write(`data: ${JSON.stringify({ content, buffer })}\n\n`);
-              }
-            } catch {
-              // Skip invalid JSON
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              contentBuffer += content;
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
             }
+          } catch {
+            // Incomplete JSON fragment — skip
           }
         }
       }
 
-      let cleanContent = buffer.trim();
+      // Process any remaining carryover after stream ends
+      if (lineCarryover.startsWith("data: ")) {
+        const data = lineCarryover.slice(6).trim();
+        if (data && data !== "[DONE]") {
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              contentBuffer += content;
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      // Parse and emit final structured result
+      let cleanContent = contentBuffer.trim();
       if (cleanContent.startsWith("```json")) {
         cleanContent = cleanContent.slice(7);
       } else if (cleanContent.startsWith("```")) {
@@ -183,14 +205,18 @@ router.post("/generate", async (req, res) => {
       try {
         const finalData = JSON.parse(cleanContent);
         res.write(`data: ${JSON.stringify({ done: true, data: finalData })}\n\n`);
-      } catch {
-        res.write(`data: ${JSON.stringify({ error: "Failed to parse AI response" })}\n\n`);
+      } catch (parseErr) {
+        req.log.error({ parseErr, contentBuffer: contentBuffer.slice(0, 200) }, "Final JSON parse failed");
+        res.write(`data: ${JSON.stringify({ error: "Failed to parse AI response — please try again" })}\n\n`);
       }
 
       res.end();
-    } catch (error) {
-      req.log.error({ error }, "Stream error");
-      res.end();
+    } catch (streamErr) {
+      req.log.error({ streamErr }, "Stream read error");
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ error: "Stream interrupted — please try again" })}\n\n`);
+        res.end();
+      }
     }
   } catch (error) {
     req.log.error({ error }, "Generate API error");

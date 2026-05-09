@@ -30,7 +30,7 @@ export default function DashboardPage() {
     localStorage.setItem("stageone-projects", JSON.stringify(newProjects))
   }, [])
 
-  const handleGenerate = async (idea: string) => {
+  const handleGenerate = useCallback(async (idea: string) => {
     setIsLoading(true)
     setResults(null)
     setError(null)
@@ -40,54 +40,67 @@ export default function DashboardPage() {
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idea }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to generate intelligence")
+        const errorData = await response.json().catch(() => ({ error: "Request failed" }))
+        throw new Error(errorData.error || `Server error: ${response.status}`)
       }
 
       const reader = response.body?.getReader()
+      if (!reader) throw new Error("No response stream available")
+
       const decoder = new TextDecoder()
-
-      if (!reader) {
-        throw new Error("No response body")
-      }
-
+      let lineCarryover = ""
       let finalData: BusinessIntelligence | null = null
+      let streamError: string | null = null
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
 
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split("\n")
+          // Prepend carryover before processing new chunk
+          const chunk = lineCarryover + decoder.decode(value, { stream: true })
+          const lines = chunk.split("\n")
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
+          // Last element may be incomplete — carry it forward
+          lineCarryover = lines.pop() ?? ""
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue
+
+            const data = line.slice(6).trim()
+            if (!data) continue
+
             try {
-              const parsed = JSON.parse(line.slice(6))
-              
+              const parsed = JSON.parse(data)
+
               if (parsed.error) {
-                throw new Error(parsed.error)
+                streamError = parsed.error
+                break
               }
 
               if (parsed.done && parsed.data) {
                 finalData = parsed.data as BusinessIntelligence
-              } else if (parsed.content) {
+              } else if (typeof parsed.content === "string") {
                 setStreamingText(prev => prev + parsed.content)
               }
-            } catch (e) {
-              if (e instanceof Error && e.message !== "Unexpected end of JSON input") {
-                console.error("Parse error:", e)
-              }
+            } catch {
+              // Incomplete JSON in this line — skip
             }
           }
+
+          if (streamError) break
         }
+      } finally {
+        reader.releaseLock()
+      }
+
+      if (streamError) {
+        throw new Error(streamError)
       }
 
       if (finalData) {
@@ -98,45 +111,56 @@ export default function DashboardPage() {
           title: idea.length > 50 ? idea.slice(0, 50) + "..." : idea,
           businessIdea: idea,
           createdAt: new Date().toISOString(),
-          metrics: finalData.metrics ? {
-            businessType: finalData.industry,
-            scalabilityScore: finalData.metrics.revenueScalability
-          } : undefined
+          metrics: finalData.metrics
+            ? {
+                businessType: finalData.industry,
+                scalabilityScore: finalData.metrics.revenueScalability,
+              }
+            : undefined,
         }
-        
-        const updatedProjects = [newProject, ...projects].slice(0, 20)
-        saveProjects(updatedProjects)
+
+        setProjects(prev => {
+          const updated = [newProject, ...prev].slice(0, 20)
+          localStorage.setItem("stageone-projects", JSON.stringify(updated))
+          return updated
+        })
         setActiveProjectId(newProject.id)
+      } else {
+        throw new Error("No analysis data received — please try again")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      const message = err instanceof Error ? err.message : "An unexpected error occurred"
+      setError(message)
     } finally {
       setIsLoading(false)
       setStreamingText("")
     }
-  }
+  }, [])
 
-  const handleSelectProject = async (project: Project) => {
+  const handleSelectProject = useCallback(async (project: Project) => {
     setActiveProjectId(project.id)
     setCurrentIdea(project.businessIdea)
     await handleGenerate(project.businessIdea)
-  }
+  }, [handleGenerate])
 
-  const handleNewProject = () => {
+  const handleNewProject = useCallback(() => {
     setActiveProjectId(null)
     setCurrentIdea("")
     setResults(null)
     setError(null)
     setStreamingText("")
-  }
+  }, [])
 
-  const handleDeleteProject = (id: string) => {
-    const updatedProjects = projects.filter(p => p.id !== id)
-    saveProjects(updatedProjects)
+  const handleDeleteProject = useCallback((id: string) => {
+    setProjects(prev => {
+      const updated = prev.filter(p => p.id !== id)
+      localStorage.setItem("stageone-projects", JSON.stringify(updated))
+      return updated
+    })
     if (activeProjectId === id) {
       handleNewProject()
     }
-  }
+  }, [activeProjectId, handleNewProject])
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -147,7 +171,7 @@ export default function DashboardPage() {
         onNewProject={handleNewProject}
         onDeleteProject={handleDeleteProject}
         collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
       />
 
       <div className="flex flex-1 flex-col min-h-screen">
