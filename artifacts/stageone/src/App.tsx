@@ -11,6 +11,9 @@ import SettingsPage from "@/pages/settings";
 import WebsiteGeneratorPage from "@/pages/website-generator";
 import ChatbotGeneratorPage from "@/pages/chatbot-generator";
 import AutomationBuilderPage from "@/pages/automation-builder";
+import OrchestratorPage from "@/pages/orchestrator";
+import AnalyticsPage from "@/pages/analytics";
+import IntegrationsPage from "@/pages/integrations";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -42,6 +45,15 @@ function Router() {
       </Route>
       <Route path="/automation-builder">
         <ProtectedRoute><AutomationBuilderPage /></ProtectedRoute>
+      </Route>
+      <Route path="/orchestrator">
+        <ProtectedRoute><OrchestratorPage /></ProtectedRoute>
+      </Route>
+      <Route path="/analytics">
+        <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
+      </Route>
+      <Route path="/integrations">
+        <ProtectedRoute><IntegrationsPage /></ProtectedRoute>
       </Route>
       <Route component={NotFound} />
     </Switch>

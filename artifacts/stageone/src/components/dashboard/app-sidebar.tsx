@@ -12,6 +12,9 @@ import {
   BarChart3,
   Bot,
   Workflow,
+  Brain,
+  Puzzle,
+  Activity,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 
@@ -20,14 +23,35 @@ interface AppSidebarProps {
   onToggle: () => void
 }
 
-const NAV = [
-  { href: "/dashboard?tab=new", icon: BarChart3, label: "Business Intelligence" },
-  { href: "/website-generator", icon: Globe, label: "Website Generator" },
-  { href: "/chatbot-generator", icon: Bot, label: "AI Chatbot Generator" },
-  { href: "/automation-builder", icon: Workflow, label: "Automation Builder" },
-  { href: "/dashboard?tab=projects", icon: FolderOpen, label: "Projects" },
-  { href: "/settings", icon: Settings, label: "Settings" },
+const NAV_SECTIONS = [
+  {
+    label: "Generate",
+    items: [
+      { href: "/dashboard?tab=new", icon: BarChart3, label: "Business Intelligence" },
+      { href: "/website-generator", icon: Globe, label: "Website Generator" },
+      { href: "/chatbot-generator", icon: Bot, label: "AI Chatbot Generator" },
+      { href: "/automation-builder", icon: Workflow, label: "Automation Builder" },
+    ],
+  },
+  {
+    label: "Orchestrate",
+    items: [
+      { href: "/orchestrator", icon: Brain, label: "AI Orchestrator" },
+      { href: "/analytics", icon: Activity, label: "Analytics" },
+    ],
+  },
+  {
+    label: "Manage",
+    items: [
+      { href: "/integrations", icon: Puzzle, label: "Integrations" },
+      { href: "/dashboard?tab=projects", icon: FolderOpen, label: "Projects" },
+      { href: "/settings", icon: Settings, label: "Settings" },
+    ],
+  },
 ]
+
+// Flat list for active-check helper
+const ALL_NAV = NAV_SECTIONS.flatMap(s => s.items)
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const { user, logout } = useAuth()
@@ -97,47 +121,54 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
         </button>
       )}
 
-      {/* Nav section label */}
-      {!collapsed && (
-        <div className="px-4 pt-4 pb-1">
-          <p className="text-[9px] font-semibold text-muted-foreground/50 uppercase tracking-widest">Modules</p>
-        </div>
-      )}
-
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 px-2 py-1 overflow-y-auto">
-        {NAV.map(({ href, icon: Icon, label }) => {
-          const active = isActive(href)
-          return (
-            <Link key={href} href={href}>
-              <div
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all cursor-pointer group ${
-                  active
-                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_0_0_12px_rgba(212,175,55,0.05)]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/4 border border-transparent"
-                } ${collapsed ? "justify-center" : ""}`}
-              >
-                <Icon className={`h-4 w-4 shrink-0 transition-colors ${active ? "text-primary" : "group-hover:text-foreground"}`} />
-                <AnimatePresence mode="wait">
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={{ duration: 0.12 }}
-                      className="truncate flex-1"
-                    >
-                      {label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                {active && !collapsed && (
-                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(212,175,55,0.6)] shrink-0" />
-                )}
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
+            {/* Section label */}
+            {!collapsed && (
+              <div className="px-2 pt-3 pb-1">
+                <p className="text-[8px] font-black text-muted-foreground/35 uppercase tracking-[0.15em]">{section.label}</p>
               </div>
-            </Link>
-          )
-        })}
+            )}
+            {collapsed && <div className="my-1 mx-2 h-px bg-white/5" />}
+
+            <div className="space-y-0.5">
+              {section.items.map(({ href, icon: Icon, label }) => {
+                const active = isActive(href)
+                return (
+                  <Link key={href} href={href}>
+                    <div
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all cursor-pointer group ${
+                        active
+                          ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_0_0_12px_rgba(212,175,55,0.05)]"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/4 border border-transparent"
+                      } ${collapsed ? "justify-center" : ""}`}
+                    >
+                      <Icon className={`h-4 w-4 shrink-0 transition-colors ${active ? "text-primary" : "group-hover:text-foreground"}`} />
+                      <AnimatePresence mode="wait">
+                        {!collapsed && (
+                          <motion.span
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -6 }}
+                            transition={{ duration: 0.12 }}
+                            className="truncate flex-1 text-xs"
+                          >
+                            {label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                      {active && !collapsed && (
+                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(212,175,55,0.6)] shrink-0" />
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Quick action CTA */}
