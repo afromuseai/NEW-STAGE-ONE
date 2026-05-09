@@ -1,249 +1,236 @@
 export interface WebsiteOutput {
   colorPalette: {
-    primary: string
-    secondary: string
-    accent: string
-    background: string
-    surface: string
-    text: string
-    textMuted: string
-    border: string
+    primary: string; secondary: string; accent: string; background: string;
+    surface: string; text: string; textMuted: string; border: string;
   }
-  typography: {
-    headingFont: string
-    bodyFont: string
-    headingStyle?: string
-    bodySize?: string
-  }
-  brand: {
-    name: string
-    tagline: string
-    voice: string
-  }
-  design: {
-    style: string
-    uiDirection: string
-    animations: string[]
-    borderRadius: string
-    glassmorphism: boolean
-  }
+  typography: { headingFont: string; bodyFont: string; headingStyle?: string; headingWeight?: string; bodySize?: string }
+  brand: { name: string; tagline: string; voice: string }
+  design: { style: string; uiDirection: string; animations: string[]; borderRadius: string; glassmorphism: boolean }
   sections: {
     nav: { logo: string; links: string[] }
-    hero: {
-      badge: string
-      headline: string
-      subheadline: string
-      ctaPrimary: string
-      ctaSecondary: string
-      socialProof: string
-    }
-    features: {
-      title: string
-      subtitle: string
-      items: Array<{ icon: string; title: string; description: string }>
-    }
-    testimonials: {
-      title: string
-      items: Array<{ quote: string; author: string; role: string; company: string }>
-    }
-    pricing: {
-      title: string
-      subtitle: string
-      tiers: Array<{
-        name: string
-        price: string
-        period: string
-        description: string
-        features: string[]
-        cta: string
-        highlighted: boolean
-        badge: string | null
-      }>
-    }
-    cta: { headline: string; subheadline: string; buttonText: string }
+    hero: { badge: string; headline: string; subheadline: string; ctaPrimary: string; ctaSecondary: string; socialProof: string }
+    features: { title: string; subtitle: string; items: Array<{ icon: string; title: string; description: string }> }
+    testimonials: { title: string; items: Array<{ quote: string; author: string; role: string; company: string; metric?: string | null }> }
+    pricing: { title: string; subtitle: string; annual?: boolean; tiers: Array<{ name: string; price: string; period: string; description: string; features: string[]; cta: string; highlighted: boolean; badge: string | null }> }
+    cta: { headline: string; subheadline: string; buttonText: string; subtext?: string }
     faq: { title: string; items: Array<{ question: string; answer: string }> }
-    footer: {
-      tagline: string
-      columns: Array<{ title: string; links: string[] }>
-      legal: string
-    }
+    footer: { tagline: string; columns: Array<{ title: string; links: string[] }>; legal: string }
   }
   seoMeta: { title: string; description: string; keywords: string[] }
   componentCode: Record<string, string>
 }
 
-function esc(s: string): string {
+function e(s: string): string {
   return (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
-
-function encodeFont(f: string): string {
-  return (f ?? "Inter").replace(/ /g, "+") + ":wght@400;500;600;700;800"
+function f(name: string): string {
+  return (name ?? "Inter").replace(/ /g, "+") + ":wght@300;400;500;600;700;800;900"
 }
 
-function iconSvg(name: string, color: string): string {
-  const icons: Record<string, string> = {
-    Zap: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
-    Target: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-    Shield: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-    Rocket: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l-4 4 1 4 4-1 4-4M15 9l-2.5-2.5M3 21l3-3M13 4l7 7-9 9-7-7z"/></svg>`,
-    Globe: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg>`,
-    Sparkles: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1M4.22 4.22l.7.7m14.14 14.14.7.7M3 12H2m20 0h-1M4.22 19.78l.7-.7M19.07 4.93l.7-.7M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>`,
-    BarChart: `<svg width="24" height="24" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="3" width="4" height="18"/></svg>`,
-    Check: `<svg width="16" height="16" fill="none" stroke="${color}" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`,
-    Star: `<svg width="24" height="24" fill="${color}" stroke="${color}" stroke-width="1" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
-  }
-  return icons[name] ?? icons["Sparkles"]
+const ICON_SVG: Record<string, (c: string) => string> = {
+  Zap: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  Target: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  Shield: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  Rocket: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l-4 4 1 4 4-1 4-4M15 9l-2.5-2.5M3 21l3-3M13 4l7 7-9 9-7-7z"/></svg>`,
+  Globe: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg>`,
+  Sparkles: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1M4.22 4.22l.7.7m14.14 14.14.7.7M3 12H2m20 0h-1M4.22 19.78l.7-.7M19.07 4.93l.7-.7"/><circle cx="12" cy="12" r="4" fill="${c}" stroke="none" opacity=".3"/></svg>`,
+  BarChart: c => `<svg width="20" height="20" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="15" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>`,
+  Check: c => `<svg width="14" height="14" fill="none" stroke="${c}" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`,
+  Star: c => `<svg width="14" height="14" fill="${c}" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+  Quote: c => `<svg width="28" height="20" fill="${c}" opacity=".2" viewBox="0 0 32 24"><path d="M0 24V14C0 6.268 4.477 1.619 13.43 0l1.906 3.047C11.142 4.239 9.048 6.273 8.571 9.143H13V24H0zm19 0V14c0-7.732 4.477-12.381 13.43-13.953L34.335 3.094C30.142 4.239 28.048 6.273 27.571 9.143H32V24H19z"/></svg>`,
 }
 
-function buildNavHtml(nav: WebsiteOutput["sections"]["nav"], c: WebsiteOutput["colorPalette"], brand: WebsiteOutput["brand"]): string {
-  const links = (nav?.links ?? ["Features", "Pricing", "FAQ"]).map(l =>
-    `<a href="#" style="color:${c.textMuted};font-size:14px;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='${c.text}'" onmouseout="this.style.color='${c.textMuted}'">${esc(l)}</a>`
+function icon(name: string, color: string): string {
+  return (ICON_SVG[name] ?? ICON_SVG["Sparkles"])(color)
+}
+
+function css(c: WebsiteOutput["colorPalette"], t: WebsiteOutput["typography"]): string {
+  const hw = t.headingWeight ?? "800"
+  const hs = t.headingStyle === "ultra-tight" ? "-0.05em" : t.headingStyle === "tight" ? "-0.03em" : "-0.015em"
+  return `
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p:${c.primary};--s:${c.secondary};--a:${c.accent};
+  --bg:${c.background};--sf:${c.surface};
+  --tx:${c.text};--tm:${c.textMuted};--br:${c.border};
+  --hf:'${t.headingFont}',system-ui,sans-serif;
+  --bf:'${t.bodyFont}',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--bf);background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+h1,h2,h3,h4,h5,h6{font-family:var(--hf);font-weight:${hw};letter-spacing:${hs};line-height:1.05}
+a{text-decoration:none;color:inherit}
+button{font-family:var(--bf);cursor:pointer;border:none;outline:none;transition:all .2s ease}
+button:hover{opacity:.9;transform:translateY(-1px)}
+img{max-width:100%}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.animate-fadeUp{animation:fadeUp .6s ease both}
+.animate-fadeIn{animation:fadeIn .5s ease both}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}.d5{animation-delay:.5s}.d6{animation-delay:.6s}
+`
+}
+
+function navHtml(nav: WebsiteOutput["sections"]["nav"], c: WebsiteOutput["colorPalette"], brand: WebsiteOutput["brand"]): string {
+  const links = (nav?.links ?? []).slice(0, 5).map(l =>
+    `<a href="#" style="color:var(--tm);font-size:14px;font-weight:500;transition:color .2s" onmouseover="this.style.color='var(--tx)'" onmouseout="this.style.color='var(--tm)'">${e(l)}</a>`
   ).join("")
   return `
-<nav style="position:sticky;top:0;z-index:50;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:${c.background}CC;border-bottom:1px solid ${c.border};padding:0 24px">
-  <div style="max-width:1200px;margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between">
-    <div style="font-family:inherit;font-size:20px;font-weight:800;color:${c.text};letter-spacing:-0.5px">${esc(nav?.logo ?? brand.name)}</div>
-    <div style="display:flex;gap:32px;align-items:center">${links}</div>
-    <button style="background:${c.primary};color:${c.background};padding:8px 20px;border-radius:8px;border:none;font-weight:600;font-size:14px;cursor:pointer">Get Started</button>
+<nav style="position:sticky;top:0;z-index:100;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);background:${c.background}e0;border-bottom:1px solid var(--br);padding:0 max(24px,4vw)">
+  <div style="max-width:1200px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:32px">
+    <div style="font-family:var(--hf);font-size:18px;font-weight:800;color:var(--tx);letter-spacing:-0.5px;white-space:nowrap;flex-shrink:0">${e(nav?.logo ?? brand.name)}</div>
+    <div style="display:flex;align-items:center;gap:28px;flex:1;justify-content:center">${links}</div>
+    <button style="background:var(--p);color:${c.background};padding:9px 20px;border-radius:8px;font-size:14px;font-weight:600;white-space:nowrap;box-shadow:0 0 20px ${c.primary}40">Get Started</button>
   </div>
 </nav>`
 }
 
-function buildHeroHtml(hero: WebsiteOutput["sections"]["hero"], c: WebsiteOutput["colorPalette"]): string {
+function heroHtml(hero: WebsiteOutput["sections"]["hero"], c: WebsiteOutput["colorPalette"]): string {
   return `
-<section style="padding:120px 24px 100px;text-align:center;background:radial-gradient(ellipse at 50% 0%, ${c.primary}18 0%, transparent 70%),${c.background}">
-  <div style="max-width:800px;margin:0 auto">
-    ${hero?.badge ? `<div style="display:inline-block;padding:6px 16px;border-radius:100px;border:1px solid ${c.primary}40;background:${c.primary}15;color:${c.primary};font-size:13px;font-weight:600;margin-bottom:28px;letter-spacing:.5px">${esc(hero.badge)}</div>` : ""}
-    <h1 style="font-size:clamp(40px,6vw,72px);font-weight:800;line-height:1.1;color:${c.text};margin:0 0 24px;letter-spacing:-2px">${esc(hero?.headline ?? "")}</h1>
-    <p style="font-size:18px;line-height:1.7;color:${c.textMuted};max-width:600px;margin:0 auto 40px">${esc(hero?.subheadline ?? "")}</p>
-    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
-      <button style="padding:16px 36px;border-radius:12px;background:${c.primary};color:${c.background};font-weight:700;font-size:16px;border:none;cursor:pointer;box-shadow:0 0 40px ${c.primary}40">${esc(hero?.ctaPrimary ?? "Get Started")}</button>
-      <button style="padding:16px 36px;border-radius:12px;background:transparent;color:${c.text};font-weight:600;font-size:16px;border:1px solid ${c.border};cursor:pointer">${esc(hero?.ctaSecondary ?? "Learn More")}</button>
+<section style="position:relative;padding:clamp(80px,12vw,160px) max(24px,4vw) clamp(60px,10vw,120px);text-align:center;overflow:hidden;background:radial-gradient(ellipse 80% 50% at 50% -10%, ${c.primary}22, transparent),var(--bg)">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 100%, ${c.secondary}18, transparent);pointer-events:none"></div>
+  <div style="position:relative;max-width:820px;margin:0 auto">
+    ${hero?.badge ? `<div class="animate-fadeUp" style="display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:100px;border:1px solid ${c.primary}40;background:${c.primary}12;color:${c.primary};font-size:13px;font-weight:600;letter-spacing:.3px;margin-bottom:28px">
+      <span style="width:6px;height:6px;border-radius:50%;background:${c.primary};flex-shrink:0"></span>${e(hero.badge)}</div>` : ""}
+    <h1 class="animate-fadeUp d1" style="font-size:clamp(36px,6.5vw,80px);color:var(--tx);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto">${e(hero?.headline ?? "")}</h1>
+    <p class="animate-fadeUp d2" style="font-size:clamp(16px,2vw,20px);line-height:1.65;color:var(--tm);max-width:560px;margin:0 auto 44px;font-weight:400">${e(hero?.subheadline ?? "")}</p>
+    <div class="animate-fadeUp d3" style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:32px">
+      <button style="padding:15px 36px;border-radius:10px;background:var(--p);color:${c.background};font-weight:700;font-size:16px;box-shadow:0 0 40px ${c.primary}50,0 4px 16px rgba(0,0,0,.3)">${e(hero?.ctaPrimary ?? "Get Started")}</button>
+      <button style="padding:15px 32px;border-radius:10px;background:transparent;color:var(--tx);font-weight:600;font-size:16px;border:1px solid var(--br)">${e(hero?.ctaSecondary ?? "Learn More")}</button>
     </div>
-    ${hero?.socialProof ? `<p style="margin-top:28px;font-size:13px;color:${c.textMuted}">${esc(hero.socialProof)}</p>` : ""}
+    ${hero?.socialProof ? `<p class="animate-fadeUp d4" style="font-size:13px;color:var(--tm);letter-spacing:.2px">${e(hero.socialProof)}</p>` : ""}
   </div>
 </section>`
 }
 
-function buildFeaturesHtml(features: WebsiteOutput["sections"]["features"], c: WebsiteOutput["colorPalette"]): string {
-  const items = (features?.items ?? []).map(f => `
-  <div style="padding:24px;border-radius:16px;background:${c.surface};border:1px solid ${c.border};transition:border-color .2s" onmouseover="this.style.borderColor='${c.primary}40'" onmouseout="this.style.borderColor='${c.border}'">
-    <div style="width:44px;height:44px;border-radius:10px;background:${c.primary}15;border:1px solid ${c.primary}30;display:flex;align-items:center;justify-content:center;margin-bottom:16px">${iconSvg(f.icon, c.primary)}</div>
-    <h3 style="font-size:16px;font-weight:700;color:${c.text};margin:0 0 8px">${esc(f.title)}</h3>
-    <p style="font-size:14px;color:${c.textMuted};line-height:1.6;margin:0">${esc(f.description)}</p>
+function featuresHtml(features: WebsiteOutput["sections"]["features"], c: WebsiteOutput["colorPalette"]): string {
+  const items = (features?.items ?? []).map((f, i) => `
+  <div class="animate-fadeUp d${Math.min(i + 1, 6)}" style="padding:28px;border-radius:16px;background:${c.surface};border:1px solid var(--br);transition:border-color .25s,transform .25s" onmouseover="this.style.borderColor='${c.primary}50';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='var(--br)';this.style.transform='translateY(0)'">
+    <div style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:${c.primary}18;border:1px solid ${c.primary}30;margin-bottom:18px">${icon(f.icon, c.primary)}</div>
+    <h3 style="font-size:16px;font-weight:700;color:var(--tx);margin-bottom:8px;letter-spacing:-.3px">${e(f.title)}</h3>
+    <p style="font-size:14px;color:var(--tm);line-height:1.65">${e(f.description)}</p>
   </div>`).join("")
   return `
-<section style="padding:100px 24px;background:${c.background}">
+<section style="padding:clamp(80px,10vw,140px) max(24px,4vw);background:var(--bg)">
   <div style="max-width:1200px;margin:0 auto">
-    <div style="text-align:center;margin-bottom:64px">
-      <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:${c.text};margin:0 0 16px;letter-spacing:-1px">${esc(features?.title ?? "Features")}</h2>
-      <p style="font-size:17px;color:${c.textMuted};margin:0">${esc(features?.subtitle ?? "")}</p>
+    <div class="animate-fadeUp" style="text-align:center;margin-bottom:64px">
+      <h2 style="font-size:clamp(28px,4vw,52px);color:var(--tx);margin-bottom:14px">${e(features?.title ?? "")}</h2>
+      <p style="font-size:18px;color:var(--tm);max-width:480px;margin:0 auto;line-height:1.6">${e(features?.subtitle ?? "")}</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">${items}</div>
   </div>
 </section>`
 }
 
-function buildTestimonialsHtml(testimonials: WebsiteOutput["sections"]["testimonials"], c: WebsiteOutput["colorPalette"]): string {
-  const stars = `<div style="display:flex;gap:3px;margin-bottom:16px">${Array(5).fill(`${iconSvg("Star", c.primary)}`).join("")}</div>`
-  const items = (testimonials?.items ?? []).map(t => `
-  <div style="padding:28px;border-radius:20px;background:${c.surface};border:1px solid ${c.border}">
-    ${stars}
-    <p style="font-size:15px;line-height:1.7;color:${c.text};margin:0 0 24px;font-style:italic">"${esc(t.quote)}"</p>
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:40px;height:40px;border-radius:50%;background:${c.primary}30;display:flex;align-items:center;justify-content:center;color:${c.primary};font-weight:700;font-size:16px">${esc(t.author?.[0] ?? "A")}</div>
+function testimonialsHtml(testimonials: WebsiteOutput["sections"]["testimonials"], c: WebsiteOutput["colorPalette"]): string {
+  const stars = Array(5).fill(`${icon("Star", c.primary)}`).join("")
+  const items = (testimonials?.items ?? []).map((t, i) => `
+  <div class="animate-fadeUp d${Math.min(i + 1, 3)}" style="padding:32px;border-radius:20px;background:${c.surface};border:1px solid var(--br);display:flex;flex-direction:column;gap:20px">
+    <div>${icon("Quote", c.primary)}</div>
+    <p style="font-size:16px;line-height:1.7;color:var(--tx);font-style:italic;flex:1">"${e(t.quote)}"</p>
+    ${t.metric ? `<div style="display:inline-block;padding:4px 12px;border-radius:100px;background:${c.primary}15;border:1px solid ${c.primary}30;color:${c.primary};font-size:12px;font-weight:700;letter-spacing:.5px;width:fit-content">${e(t.metric)}</div>` : ""}
+    <div style="display:flex;align-items:center;gap:12px;border-top:1px solid var(--br);padding-top:20px">
+      <div style="width:42px;height:42px;border-radius:50%;background:${c.primary}25;display:flex;align-items:center;justify-content:center;font-family:var(--hf);font-weight:800;font-size:16px;color:${c.primary};flex-shrink:0">${e(t.author?.[0] ?? "A")}</div>
       <div>
-        <p style="font-weight:700;color:${c.text};margin:0;font-size:14px">${esc(t.author)}</p>
-        <p style="color:${c.textMuted};margin:0;font-size:13px">${esc(t.role)}, ${esc(t.company)}</p>
+        <div style="font-weight:700;font-size:14px;color:var(--tx)">${e(t.author)}</div>
+        <div style="font-size:13px;color:var(--tm)">${e(t.role)}, ${e(t.company)}</div>
       </div>
+      <div style="margin-left:auto;display:flex;gap:2px">${stars}</div>
     </div>
   </div>`).join("")
   return `
-<section style="padding:100px 24px;background:${c.background === "#ffffff" ? "#f8f8f8" : "#0a0a0a"}">
+<section style="padding:clamp(80px,10vw,140px) max(24px,4vw);background:${c.background === "#ffffff" || c.background === "#fafafa" ? "#f5f5f5" : "#050505"}">
   <div style="max-width:1200px;margin:0 auto">
-    <h2 style="text-align:center;font-size:clamp(28px,4vw,44px);font-weight:800;color:${c.text};margin:0 0 64px;letter-spacing:-1px">${esc(testimonials?.title ?? "What customers say")}</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">${items}</div>
+    <h2 class="animate-fadeUp" style="text-align:center;font-size:clamp(28px,4vw,52px);color:var(--tx);margin-bottom:64px">${e(testimonials?.title ?? "What customers say")}</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">${items}</div>
   </div>
 </section>`
 }
 
-function buildPricingHtml(pricing: WebsiteOutput["sections"]["pricing"], c: WebsiteOutput["colorPalette"]): string {
-  const tiers = (pricing?.tiers ?? []).map(t => `
-  <div style="padding:36px;border-radius:24px;background:${t.highlighted ? c.primary + "10" : c.surface};border:1.5px solid ${t.highlighted ? c.primary + "50" : c.border};position:relative;display:flex;flex-direction:column;gap:8px">
-    ${t.badge ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:${c.primary};color:${c.background};padding:4px 16px;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap">${esc(t.badge)}</div>` : ""}
-    <div style="font-size:18px;font-weight:700;color:${c.text}">${esc(t.name)}</div>
-    <div style="display:flex;align-items:baseline;gap:4px;margin:8px 0">
-      <span style="font-size:48px;font-weight:800;color:${t.highlighted ? c.primary : c.text};line-height:1">${esc(t.price)}</span>
-      <span style="color:${c.textMuted};font-size:15px">${esc(t.period)}</span>
+function pricingHtml(pricing: WebsiteOutput["sections"]["pricing"], c: WebsiteOutput["colorPalette"]): string {
+  const tiers = (pricing?.tiers ?? []).map((t, i) => `
+  <div class="animate-fadeUp d${i + 1}" style="position:relative;padding:40px 36px;border-radius:24px;background:${t.highlighted ? `${c.primary}0e` : c.surface};border:${t.highlighted ? `1.5px solid ${c.primary}60` : `1px solid var(--br)`};display:flex;flex-direction:column;gap:4px;${t.highlighted ? `box-shadow:0 0 60px ${c.primary}20` : ""}">
+    ${t.badge ? `<div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--p);color:${c.background};padding:4px 18px;border-radius:100px;font-size:12px;font-weight:700;white-space:nowrap;letter-spacing:.5px">${e(t.badge)}</div>` : ""}
+    <div style="font-size:14px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">${e(t.name)}</div>
+    <div style="display:flex;align-items:baseline;gap:3px;margin:8px 0 6px">
+      <span style="font-family:var(--hf);font-size:clamp(36px,5vw,54px);font-weight:900;color:${t.highlighted ? `var(--p)` : "var(--tx)"};line-height:1">${e(t.price)}</span>
+      ${t.period ? `<span style="font-size:15px;color:var(--tm)">${e(t.period)}</span>` : ""}
     </div>
-    ${t.description ? `<p style="font-size:14px;color:${c.textMuted};margin:0 0 16px">${esc(t.description)}</p>` : ""}
-    <div style="flex:1">
+    ${t.description ? `<p style="font-size:14px;color:var(--tm);margin-bottom:16px;line-height:1.5">${e(t.description)}</p>` : ""}
+    <div style="flex:1;padding:20px 0;border-top:1px solid var(--br);border-bottom:1px solid var(--br);margin:12px 0;display:flex;flex-direction:column;gap:12px">
       ${(t.features ?? []).map(f => `
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid ${c.border}30">
-        <div style="flex-shrink:0;width:18px;height:18px;border-radius:50%;background:${c.primary}25;display:flex;align-items:center;justify-content:center">${iconSvg("Check", c.primary)}</div>
-        <span style="font-size:14px;color:${c.textMuted}">${esc(f)}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:${c.primary}20;display:flex;align-items:center;justify-content:center">${icon("Check", c.primary)}</div>
+        <span style="font-size:14px;color:var(--tm)">${e(f)}</span>
       </div>`).join("")}
     </div>
-    <button style="margin-top:24px;width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;font-weight:700;font-size:15px;background:${t.highlighted ? c.primary : "transparent"};color:${t.highlighted ? c.background : c.text};border:1px solid ${t.highlighted ? c.primary : c.border}">${esc(t.cta)}</button>
+    <button style="margin-top:20px;width:100%;padding:14px 24px;border-radius:12px;font-weight:700;font-size:15px;background:${t.highlighted ? "var(--p)" : "transparent"};color:${t.highlighted ? c.background : "var(--tx)"};border:${t.highlighted ? "none" : "1px solid var(--br)"};${t.highlighted ? `box-shadow:0 4px 24px ${c.primary}40` : ""}">${e(t.cta)}</button>
   </div>`).join("")
   return `
-<section style="padding:100px 24px;background:${c.background}">
+<section style="padding:clamp(80px,10vw,140px) max(24px,4vw);background:var(--bg)">
   <div style="max-width:1200px;margin:0 auto">
-    <div style="text-align:center;margin-bottom:64px">
-      <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:${c.text};margin:0 0 16px;letter-spacing:-1px">${esc(pricing?.title ?? "Pricing")}</h2>
-      <p style="font-size:17px;color:${c.textMuted};margin:0">${esc(pricing?.subtitle ?? "")}</p>
+    <div class="animate-fadeUp" style="text-align:center;margin-bottom:64px">
+      <h2 style="font-size:clamp(28px,4vw,52px);color:var(--tx);margin-bottom:14px">${e(pricing?.title ?? "Pricing")}</h2>
+      <p style="font-size:18px;color:var(--tm)">${e(pricing?.subtitle ?? "")}</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:start">${tiers}</div>
   </div>
 </section>`
 }
 
-function buildCtaHtml(cta: WebsiteOutput["sections"]["cta"], c: WebsiteOutput["colorPalette"]): string {
+function ctaHtml(cta: WebsiteOutput["sections"]["cta"], c: WebsiteOutput["colorPalette"]): string {
   return `
-<section style="padding:100px 24px;background:${c.background}">
-  <div style="max-width:800px;margin:0 auto;text-align:center;padding:80px 40px;border-radius:32px;background:radial-gradient(ellipse at 50% 50%, ${c.primary}20 0%, ${c.surface} 70%);border:1px solid ${c.primary}30">
-    <h2 style="font-size:clamp(28px,4vw,48px);font-weight:800;color:${c.text};margin:0 0 20px;letter-spacing:-1.5px">${esc(cta?.headline ?? "Ready to get started?")}</h2>
-    <p style="font-size:18px;color:${c.textMuted};margin:0 0 40px;line-height:1.6">${esc(cta?.subheadline ?? "")}</p>
-    <button style="padding:18px 48px;border-radius:14px;background:${c.primary};color:${c.background};font-weight:700;font-size:17px;border:none;cursor:pointer;box-shadow:0 0 60px ${c.primary}50">${esc(cta?.buttonText ?? "Get Started Free")}</button>
+<section style="padding:clamp(80px,10vw,140px) max(24px,4vw);background:var(--bg)">
+  <div style="max-width:960px;margin:0 auto">
+    <div class="animate-fadeUp" style="position:relative;text-align:center;padding:clamp(60px,8vw,100px) clamp(32px,6vw,80px);border-radius:32px;background:radial-gradient(ellipse 100% 100% at 50% 50%, ${c.primary}22, ${c.surface});border:1px solid ${c.primary}35;overflow:hidden">
+      <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:${c.primary}15;border-radius:50%;filter:blur(60px);pointer-events:none"></div>
+      <h2 style="position:relative;font-size:clamp(28px,5vw,60px);color:var(--tx);margin-bottom:20px">${e(cta?.headline ?? "")}</h2>
+      <p style="position:relative;font-size:18px;color:var(--tm);margin-bottom:40px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.6">${e(cta?.subheadline ?? "")}</p>
+      <button style="position:relative;padding:18px 48px;border-radius:14px;background:var(--p);color:${c.background};font-weight:700;font-size:17px;box-shadow:0 0 60px ${c.primary}50,0 4px 20px rgba(0,0,0,.3)">${e(cta?.buttonText ?? "Get Started")}</button>
+      ${cta?.subtext ? `<p style="position:relative;margin-top:16px;font-size:13px;color:var(--tm)">${e(cta.subtext)}</p>` : ""}
+    </div>
   </div>
 </section>`
 }
 
-function buildFaqHtml(faq: WebsiteOutput["sections"]["faq"], c: WebsiteOutput["colorPalette"]): string {
+function faqHtml(faq: WebsiteOutput["sections"]["faq"], c: WebsiteOutput["colorPalette"]): string {
   const items = (faq?.items ?? []).map((item, i) => `
-  <details style="border-radius:12px;border:1px solid ${c.border};overflow:hidden;cursor:pointer">
-    <summary style="padding:20px 24px;font-weight:600;color:${c.text};font-size:16px;list-style:none;display:flex;justify-content:space-between;align-items:center;background:${c.surface}">
-      ${esc(item.question)}
-      <span style="color:${c.primary};flex-shrink:0;margin-left:16px">+</span>
+  <details class="animate-fadeUp d${Math.min(i + 1, 5)}" style="border-radius:14px;border:1px solid var(--br);overflow:hidden;transition:border-color .2s" onmouseover="this.style.borderColor='${c.primary}40'" onmouseout="this.style.borderColor='var(--br)'">
+    <summary style="padding:22px 28px;font-weight:600;font-size:16px;color:var(--tx);list-style:none;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:${c.surface};gap:16px">
+      ${e(item.question)}
+      <span style="color:var(--p);font-size:20px;flex-shrink:0;transition:transform .2s;font-weight:300">+</span>
     </summary>
-    <div style="padding:20px 24px;background:${c.background};color:${c.textMuted};font-size:15px;line-height:1.7;border-top:1px solid ${c.border}">${esc(item.answer)}</div>
+    <div style="padding:22px 28px;background:var(--bg);border-top:1px solid var(--br);font-size:15px;color:var(--tm);line-height:1.75">${e(item.answer)}</div>
   </details>`).join("")
   return `
-<section style="padding:100px 24px;background:${c.background === "#ffffff" ? "#f8f8f8" : "#0a0a0a"}">
-  <div style="max-width:720px;margin:0 auto">
-    <h2 style="text-align:center;font-size:clamp(28px,4vw,44px);font-weight:800;color:${c.text};margin:0 0 48px;letter-spacing:-1px">${esc(faq?.title ?? "Frequently Asked Questions")}</h2>
+<section style="padding:clamp(80px,10vw,140px) max(24px,4vw);background:${c.background === "#ffffff" || c.background === "#fafafa" ? "#f5f5f5" : "#050505"}">
+  <div style="max-width:760px;margin:0 auto">
+    <h2 class="animate-fadeUp" style="text-align:center;font-size:clamp(28px,4vw,52px);color:var(--tx);margin-bottom:56px">${e(faq?.title ?? "FAQ")}</h2>
     <div style="display:flex;flex-direction:column;gap:12px">${items}</div>
   </div>
 </section>`
 }
 
-function buildFooterHtml(footer: WebsiteOutput["sections"]["footer"], brand: WebsiteOutput["brand"], c: WebsiteOutput["colorPalette"]): string {
+function footerHtml(footer: WebsiteOutput["sections"]["footer"], brand: WebsiteOutput["brand"], c: WebsiteOutput["colorPalette"]): string {
   const cols = (footer?.columns ?? []).map(col => `
   <div>
-    <div style="font-weight:700;color:${c.text};margin-bottom:16px;font-size:14px">${esc(col.title)}</div>
-    ${(col.links ?? []).map(l => `<a href="#" style="display:block;color:${c.textMuted};font-size:14px;text-decoration:none;margin-bottom:10px;transition:color .2s" onmouseover="this.style.color='${c.text}'" onmouseout="this.style.color='${c.textMuted}'">${esc(l)}</a>`).join("")}
+    <div style="font-size:12px;font-weight:700;color:var(--tx);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">${e(col.title)}</div>
+    ${(col.links ?? []).map(l => `<a href="#" style="display:block;font-size:14px;color:var(--tm);margin-bottom:10px;transition:color .2s" onmouseover="this.style.color='var(--tx)'" onmouseout="this.style.color='var(--tm)'">${e(l)}</a>`).join("")}
   </div>`).join("")
   return `
-<footer style="background:${c.background};border-top:1px solid ${c.border};padding:64px 24px 32px">
+<footer style="background:var(--bg);border-top:1px solid var(--br);padding:clamp(48px,6vw,80px) max(24px,4vw) 32px">
   <div style="max-width:1200px;margin:0 auto">
-    <div style="display:grid;grid-template-columns:1.5fr repeat(auto-fit,1fr);gap:48px;margin-bottom:48px">
+    <div style="display:grid;grid-template-columns:1.8fr repeat(3,1fr);gap:48px;margin-bottom:48px">
       <div>
-        <div style="font-size:20px;font-weight:800;color:${c.text};margin-bottom:12px">${esc(brand?.name ?? "")}</div>
-        <p style="color:${c.textMuted};font-size:14px;line-height:1.6;max-width:240px">${esc(footer?.tagline ?? brand?.tagline ?? "")}</p>
+        <div style="font-family:var(--hf);font-size:18px;font-weight:800;color:var(--tx);margin-bottom:12px;letter-spacing:-.5px">${e(brand?.name ?? "")}</div>
+        <p style="font-size:14px;color:var(--tm);line-height:1.65;max-width:220px">${e(footer?.tagline ?? brand?.tagline ?? "")}</p>
       </div>
       ${cols}
     </div>
-    <div style="border-top:1px solid ${c.border};padding-top:24px;text-align:center;color:${c.textMuted};font-size:13px">${esc(footer?.legal ?? `© ${new Date().getFullYear()} ${brand?.name ?? ""}. All rights reserved.`)}</div>
+    <div style="border-top:1px solid var(--br);padding-top:24px;display:flex;align-items:center;justify-content:center">
+      <span style="font-size:13px;color:var(--tm)">${e(footer?.legal ?? `© ${new Date().getFullYear()} ${brand?.name}. All rights reserved.`)}</span>
+    </div>
   </div>
 </footer>`
 }
@@ -251,45 +238,34 @@ function buildFooterHtml(footer: WebsiteOutput["sections"]["footer"], brand: Web
 export function buildPreviewHtml(data: WebsiteOutput): string {
   const c = data.colorPalette ?? {
     primary: "#d4af37", secondary: "#1a1a1a", accent: "#d4af37",
-    background: "#0a0a0a", surface: "#111111", text: "#ffffff",
-    textMuted: "#888888", border: "#222222"
+    background: "#0a0a0a", surface: "#111111", text: "#ffffff", textMuted: "#888888", border: "#1f1f1f"
   }
-  const t = data.typography ?? { headingFont: "Inter", bodyFont: "Inter" }
+  const t = data.typography ?? { headingFont: "Inter", bodyFont: "Inter", headingWeight: "800", headingStyle: "tight" }
   const s = data.sections ?? {} as WebsiteOutput["sections"]
   const brand = data.brand ?? { name: "Brand", tagline: "", voice: "professional" }
-
-  const headingFont = `'${t.headingFont}', system-ui, sans-serif`
-  const bodyFont = `'${t.bodyFont}', system-ui, sans-serif`
-  const gFonts = `https://fonts.googleapis.com/css2?family=${encodeFont(t.headingFont)}&family=${encodeFont(t.bodyFont)}&display=swap`
+  const fonts = `https://fonts.googleapis.com/css2?family=${f(t.headingFont)}&family=${f(t.bodyFont)}&display=swap`
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="${gFonts}" rel="stylesheet">
-<title>${esc(data.seoMeta?.title ?? brand.name)}</title>
-<meta name="description" content="${esc(data.seoMeta?.description ?? "")}">
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: ${bodyFont}; background: ${c.background}; color: ${c.text}; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-h1, h2, h3, h4, h5, h6 { font-family: ${headingFont}; }
-button { font-family: ${bodyFont}; cursor: pointer; transition: opacity .2s, transform .1s; }
-button:hover { opacity: .9; transform: translateY(-1px); }
-details summary::-webkit-details-marker { display: none; }
-</style>
+<link href="${fonts}" rel="stylesheet">
+<title>${e(data.seoMeta?.title ?? brand.name)}</title>
+<meta name="description" content="${e(data.seoMeta?.description ?? "")}">
+<style>${css(c, t)}</style>
 </head>
 <body>
-${buildNavHtml(s.nav, c, brand)}
-${buildHeroHtml(s.hero, c)}
-${buildFeaturesHtml(s.features, c)}
-${buildTestimonialsHtml(s.testimonials, c)}
-${buildPricingHtml(s.pricing, c)}
-${buildCtaHtml(s.cta, c)}
-${buildFaqHtml(s.faq, c)}
-${buildFooterHtml(s.footer, brand, c)}
+${navHtml(s.nav, c, brand)}
+${heroHtml(s.hero, c)}
+${featuresHtml(s.features, c)}
+${testimonialsHtml(s.testimonials, c)}
+${pricingHtml(s.pricing, c)}
+${ctaHtml(s.cta, c)}
+${faqHtml(s.faq, c)}
+${footerHtml(s.footer, brand, c)}
 </body>
 </html>`
 }
@@ -298,111 +274,23 @@ export function buildNextjsProject(data: WebsiteOutput): Record<string, string> 
   const c = data.colorPalette
   const brand = data.brand ?? { name: "My App", tagline: "", voice: "professional" }
   const code = data.componentCode ?? {}
+  const slug = (brand.name ?? "my-app").toLowerCase().replace(/[^a-z0-9]+/g, "-")
 
   return {
-    "package.json": JSON.stringify({
-      name: (brand.name ?? "my-app").toLowerCase().replace(/\s+/g, "-"),
-      version: "0.1.0",
-      private: true,
-      scripts: { dev: "next dev", build: "next build", start: "next start" },
-      dependencies: {
-        "next": "14.2.0",
-        "react": "^18",
-        "react-dom": "^18",
-      },
-      devDependencies: {
-        "@types/node": "^20",
-        "@types/react": "^18",
-        "@types/react-dom": "^18",
-        "typescript": "^5",
-        "tailwindcss": "^3",
-        "autoprefixer": "^10",
-        "postcss": "^8",
-      }
-    }, null, 2),
-    "tailwind.config.ts": `import type { Config } from 'tailwindcss'
-const config: Config = {
-  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
-  theme: {
-    extend: {
-      colors: {
-        primary: '${c?.primary ?? "#d4af37"}',
-        secondary: '${c?.secondary ?? "#1a1a1a"}',
-        accent: '${c?.accent ?? "#d4af37"}',
-        brand: { bg: '${c?.background ?? "#0a0a0a"}', surface: '${c?.surface ?? "#111"}', text: '${c?.text ?? "#fff"}', muted: '${c?.textMuted ?? "#888"}', border: '${c?.border ?? "#222"}' }
-      },
-      fontFamily: {
-        heading: ['${data.typography?.headingFont ?? "Inter"}', 'sans-serif'],
-        body: ['${data.typography?.bodyFont ?? "Inter"}', 'sans-serif'],
-      },
-    }
-  },
-  plugins: [],
-}
-export default config`,
+    "package.json": JSON.stringify({ name: slug, version: "0.1.0", private: true, scripts: { dev: "next dev", build: "next build", start: "next start" }, dependencies: { next: "14.2.0", react: "^18", "react-dom": "^18" }, devDependencies: { "@types/node": "^20", "@types/react": "^18", "@types/react-dom": "^18", typescript: "^5", tailwindcss: "^3", autoprefixer: "^10", postcss: "^8" } }, null, 2),
+    "tailwind.config.ts": `import type { Config } from 'tailwindcss'\nconst config: Config = {\n  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],\n  theme: { extend: { colors: { primary: '${c?.primary}', bg: '${c?.background}', surface: '${c?.surface}', muted: '${c?.textMuted}' }, fontFamily: { heading: ['${data.typography?.headingFont}', 'sans-serif'], body: ['${data.typography?.bodyFont}', 'sans-serif'] } } },\n  plugins: []\n}\nexport default config`,
     "postcss.config.js": `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } }`,
-    "app/globals.css": `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n:root {\n  --color-primary: ${c?.primary ?? "#d4af37"};\n}\n\nbody {\n  font-family: '${data.typography?.bodyFont ?? "Inter"}', system-ui, sans-serif;\n  background: ${c?.background ?? "#0a0a0a"};\n  color: ${c?.text ?? "#ffffff"};\n  -webkit-font-smoothing: antialiased;\n}`,
-    "app/layout.tsx": `import type { Metadata } from 'next'
-import { ${(data.typography?.headingFont ?? "Inter").replace(/ /g, "_")}, ${(data.typography?.bodyFont ?? "Inter").replace(/ /g, "_")} } from 'next/font/google'
-import './globals.css'
-
-export const metadata: Metadata = {
-  title: '${(data.seoMeta?.title ?? brand.name).replace(/'/g, "\\'")}',
-  description: '${(data.seoMeta?.description ?? "").replace(/'/g, "\\'")}',
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
-}`,
-    "app/page.tsx": `import { Nav } from '@/components/Nav'
-import { Hero } from '@/components/Hero'
-import { Features } from '@/components/Features'
-import { Testimonials } from '@/components/Testimonials'
-import { Pricing } from '@/components/Pricing'
-import { CTA } from '@/components/CTA'
-import { FAQ } from '@/components/FAQ'
-import { Footer } from '@/components/Footer'
-
-export default function Home() {
-  return (
-    <main>
-      <Nav />
-      <Hero />
-      <Features />
-      <Testimonials />
-      <Pricing />
-      <CTA />
-      <FAQ />
-      <Footer />
-    </main>
-  )
-}`,
-    "components/Nav.tsx": code.nav ?? `'use client'
-import Link from 'next/link'
-export function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 border-b border-brand-border backdrop-blur-xl bg-brand-bg/80 px-6">
-      <div className="max-w-6xl mx-auto h-16 flex items-center justify-between">
-        <span className="text-xl font-bold font-heading text-brand-text">${esc(brand.name)}</span>
-        <div className="flex items-center gap-8">
-          ${(data.sections?.nav?.links ?? []).map(l => `<Link href="#" className="text-sm text-brand-muted hover:text-brand-text transition-colors">${esc(l)}</Link>`).join("\n          ")}
-        </div>
-        <button className="bg-primary text-brand-bg px-5 py-2 rounded-lg font-semibold text-sm">Get Started</button>
-      </div>
-    </nav>
-  )
-}`,
-    "components/Hero.tsx": code.hero ?? "// Hero component — customize with your content",
-    "components/Features.tsx": code.features ?? "// Features component",
-    "components/Testimonials.tsx": code.testimonials ?? "// Testimonials component",
-    "components/Pricing.tsx": code.pricing ?? "// Pricing component",
-    "components/CTA.tsx": code.cta ?? "// CTA component",
-    "components/FAQ.tsx": code.faq ?? "// FAQ component",
-    "components/Footer.tsx": code.footer ?? "// Footer component",
-    "README.md": `# ${brand.name}\n\n${brand.tagline}\n\nGenerated by STAGEONE AI Website Builder.\n\n## Getting Started\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nOpen [http://localhost:3000](http://localhost:3000) to see your website.`,
+    "app/globals.css": `@tailwind base;\n@tailwind components;\n@tailwind utilities;\nbody { font-family: '${data.typography?.bodyFont}', system-ui, sans-serif; background: ${c?.background}; color: ${c?.text}; -webkit-font-smoothing: antialiased; }`,
+    "app/layout.tsx": `import type { Metadata } from 'next'\nimport './globals.css'\nexport const metadata: Metadata = { title: '${(data.seoMeta?.title ?? brand.name).replace(/'/g, "\\'")}', description: '${(data.seoMeta?.description ?? "").replace(/'/g, "\\'")}' }\nexport default function RootLayout({ children }: { children: React.ReactNode }) { return (<html lang="en"><body>{children}</body></html>) }`,
+    "app/page.tsx": `import { Nav } from '@/components/Nav'\nimport { Hero } from '@/components/Hero'\nimport { Features } from '@/components/Features'\nimport { Testimonials } from '@/components/Testimonials'\nimport { Pricing } from '@/components/Pricing'\nimport { CTA } from '@/components/CTA'\nimport { FAQ } from '@/components/FAQ'\nimport { Footer } from '@/components/Footer'\nexport default function Home() { return (<main><Nav /><Hero /><Features /><Testimonials /><Pricing /><CTA /><FAQ /><Footer /></main>) }`,
+    "components/Hero.tsx": code.hero ?? "export function Hero() { return <section>Hero</section> }",
+    "components/Features.tsx": code.features ?? "export function Features() { return <section>Features</section> }",
+    "components/Testimonials.tsx": code.testimonials ?? "export function Testimonials() { return <section>Testimonials</section> }",
+    "components/Pricing.tsx": code.pricing ?? "export function Pricing() { return <section>Pricing</section> }",
+    "components/CTA.tsx": code.cta ?? "export function CTA() { return <section>CTA</section> }",
+    "components/FAQ.tsx": code.faq ?? "export function FAQ() { return <section>FAQ</section> }",
+    "components/Footer.tsx": code.footer ?? "export function Footer() { return <footer>Footer</footer> }",
+    "components/Nav.tsx": `'use client'\nexport function Nav() { return (<nav className="sticky top-0 z-50 border-b backdrop-blur-xl bg-[${c?.background}]/80 px-6"><div className="max-w-6xl mx-auto h-16 flex items-center justify-between"><span className="text-xl font-black">${e(brand.name)}</span><button className="px-5 py-2 rounded-lg font-semibold text-sm" style={{background:'${c?.primary}'}}>Get Started</button></div></nav>) }`,
+    "README.md": `# ${brand.name}\n\n${brand.tagline}\n\nGenerated by STAGEONE AI Website Builder.\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\``,
   }
 }

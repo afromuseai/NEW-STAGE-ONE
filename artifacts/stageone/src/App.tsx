@@ -8,6 +8,7 @@ import SignupPage from "@/pages/signup";
 import DashboardPage from "@/pages/dashboard";
 import ProjectPage from "@/pages/project";
 import SettingsPage from "@/pages/settings";
+import WebsiteGeneratorPage from "@/pages/website-generator";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -30,6 +31,9 @@ function Router() {
       </Route>
       <Route path="/settings">
         <ProtectedRoute><SettingsPage /></ProtectedRoute>
+      </Route>
+      <Route path="/website-generator">
+        <ProtectedRoute><WebsiteGeneratorPage /></ProtectedRoute>
       </Route>
       <Route component={NotFound} />
     </Switch>

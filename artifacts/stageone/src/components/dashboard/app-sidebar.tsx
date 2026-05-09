@@ -8,7 +8,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Zap,
+  Globe,
+  BarChart3,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 
@@ -18,9 +19,9 @@ interface AppSidebarProps {
 }
 
 const NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard?tab=new", icon: BarChart3, label: "Business Intelligence" },
+  { href: "/website-generator", icon: Globe, label: "Website Generator" },
   { href: "/dashboard?tab=projects", icon: FolderOpen, label: "Projects" },
-  { href: "/dashboard?tab=new", icon: Sparkles, label: "New Generation" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ]
 
@@ -30,7 +31,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
   const isActive = (href: string) => {
     const base = href.split("?")[0]
-    return location === base || location.startsWith(base + "/")
+    const tab = new URLSearchParams(href.split("?")[1] ?? "").get("tab")
+    if (base === "/dashboard" && tab) {
+      const currentTab = new URLSearchParams(
+        typeof window !== "undefined" ? window.location.search : ""
+      ).get("tab")
+      return location === "/dashboard" && currentTab === tab
+    }
+    return location === base || (base !== "/dashboard" && location.startsWith(base))
   }
 
   return (
@@ -49,18 +57,21 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2.5"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">S1</span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary shadow-[0_0_12px_rgba(212,175,55,0.4)]">
+                <span className="text-xs font-black text-primary-foreground tracking-tight">S1</span>
               </div>
-              <span className="text-base font-semibold text-foreground">STAGEONE</span>
+              <div>
+                <span className="text-sm font-black text-foreground tracking-tight">STAGEONE</span>
+                <div className="text-[9px] text-muted-foreground tracking-wider uppercase">AI Platform</div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
         {collapsed && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary mx-auto">
-            <span className="text-sm font-bold text-primary-foreground">S1</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary mx-auto shadow-[0_0_12px_rgba(212,175,55,0.3)]">
+            <span className="text-xs font-black text-primary-foreground">S1</span>
           </div>
         )}
         {!collapsed && (
@@ -76,50 +87,64 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       {collapsed && (
         <button
           onClick={onToggle}
-          className="absolute -right-3 top-[72px] z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute -right-3 top-[72px] z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground transition-colors shadow-sm"
         >
           <ChevronRight className="h-3 w-3" />
         </button>
       )}
 
+      {/* Nav section label */}
+      {!collapsed && (
+        <div className="px-4 pt-4 pb-1">
+          <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Modules</p>
+        </div>
+      )}
+
       {/* Nav */}
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-0.5 px-2 py-1">
         {NAV.map(({ href, icon: Icon, label }) => {
-          const active = isActive(href.split("?")[0])
+          const active = isActive(href)
           return (
             <Link key={href} href={href}>
               <div
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all cursor-pointer group ${
                   active
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_0_0_12px_rgba(212,175,55,0.05)]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/4 border border-transparent"
                 } ${collapsed ? "justify-center" : ""}`}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className={`h-4 w-4 shrink-0 transition-colors ${active ? "text-primary" : "group-hover:text-foreground"}`} />
                 <AnimatePresence mode="wait">
                   {!collapsed && (
                     <motion.span
-                      initial={{ opacity: 0, x: -8 }}
+                      initial={{ opacity: 0, x: -6 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -8 }}
-                      transition={{ duration: 0.15 }}
+                      exit={{ opacity: 0, x: -6 }}
+                      transition={{ duration: 0.12 }}
+                      className="truncate"
                     >
                       {label}
                     </motion.span>
                   )}
                 </AnimatePresence>
+                {active && !collapsed && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(212,175,55,0.6)]"
+                  />
+                )}
               </div>
             </Link>
           )
         })}
       </nav>
 
-      {/* New Generation CTA */}
+      {/* Quick action CTA */}
       {!collapsed && (
-        <div className="px-3 pb-3">
+        <div className="px-3 pb-2">
           <Link href="/dashboard?tab=new">
-            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors cursor-pointer">
-              <Zap className="h-4 w-4" />
+            <div className="flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/8 px-3 py-2.5 text-xs font-semibold text-primary hover:bg-primary/15 transition-all cursor-pointer">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>New Analysis</span>
             </div>
           </Link>
@@ -130,10 +155,15 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       <div className="border-t border-white/5 p-3">
         <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
           {user && !collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
-            </div>
+            <>
+              <div className="h-7 w-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-bold text-primary">{(user.name ?? user.email)[0].toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </>
           )}
           <button
             onClick={() => logout()}
