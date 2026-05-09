@@ -1,300 +1,224 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Link } from "wouter"
-import { 
-  ArrowLeft, 
-  User, 
-  Bell, 
-  Palette, 
+import { useLocation } from "wouter"
+import {
+  ArrowLeft,
+  User,
+  Bell,
+  Palette,
   Database,
   Key,
   Trash2,
   Save,
-  Check
+  Check,
+  LogOut,
 } from "lucide-react"
-
-interface UserSettings {
-  displayName: string
-  email: string
-  notifications: {
-    emailUpdates: boolean
-    projectAlerts: boolean
-  }
-  preferences: {
-    defaultOutputLength: "concise" | "detailed"
-    autoSave: boolean
-  }
-}
-
-const defaultSettings: UserSettings = {
-  displayName: "",
-  email: "",
-  notifications: {
-    emailUpdates: true,
-    projectAlerts: true
-  },
-  preferences: {
-    defaultOutputLength: "concise",
-    autoSave: true
-  }
-}
+import { useAuth } from "@/lib/auth-context"
+import { api } from "@/lib/api"
+import { AppSidebar } from "@/components/dashboard/app-sidebar"
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<UserSettings>(defaultSettings)
+  const { user, logout } = useAuth()
+  const [, setLocation] = useLocation()
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [projectCount, setProjectCount] = useState<number | null>(null)
   const [saved, setSaved] = useState(false)
-  const [projectCount, setProjectCount] = useState(0)
+
+  const [outputLength, setOutputLength] = useState<"concise" | "detailed">("concise")
+  const [emailUpdates, setEmailUpdates] = useState(true)
 
   useEffect(() => {
-    const savedSettings = localStorage.getItem("stageone-settings")
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings))
+    const prefs = localStorage.getItem("stageone-prefs")
+    if (prefs) {
+      try {
+        const p = JSON.parse(prefs)
+        setOutputLength(p.outputLength ?? "concise")
+        setEmailUpdates(p.emailUpdates ?? true)
+      } catch { /* ignore */ }
     }
-    const savedProjects = localStorage.getItem("stageone-projects")
-    if (savedProjects) {
-      setProjectCount(JSON.parse(savedProjects).length)
-    }
+    api.projects.list().then(({ projects }) => setProjectCount(projects.length)).catch(() => {})
   }, [])
 
   const handleSave = () => {
-    localStorage.setItem("stageone-settings", JSON.stringify(settings))
+    localStorage.setItem("stageone-prefs", JSON.stringify({ outputLength, emailUpdates }))
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const handleClearHistory = () => {
-    if (confirm("Are you sure you want to clear all project history? This cannot be undone.")) {
-      localStorage.removeItem("stageone-projects")
-      setProjectCount(0)
-    }
+  const handleSignOut = async () => {
+    await logout()
+    setLocation("/")
   }
 
-  const SettingSection = ({ 
-    icon: Icon, 
-    title, 
-    description, 
-    children 
-  }: { 
+  const SettingSection = ({
+    icon: Icon,
+    title,
+    description,
+    children,
+  }: {
     icon: typeof User
     title: string
     description: string
-    children: React.ReactNode 
+    children: React.ReactNode
   }) => (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors"
+      className="glass-card rounded-xl p-6"
     >
       <div className="flex items-start gap-4">
-        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <Icon className="w-5 h-5 text-amber-400" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 shrink-0">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <p className="text-sm text-neutral-500 mt-1">{description}</p>
-          <div className="mt-4 space-y-4">
-            {children}
-          </div>
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+          <div className="mt-4 space-y-4">{children}</div>
         </div>
       </div>
     </motion.div>
   )
 
-  const Toggle = ({ 
-    checked, 
-    onChange, 
-    label 
-  }: { 
+  const Toggle = ({
+    checked,
+    onChange,
+    label,
+  }: {
     checked: boolean
-    onChange: (checked: boolean) => void
-    label: string 
+    onChange: (v: boolean) => void
+    label: string
   }) => (
     <label className="flex items-center justify-between cursor-pointer group">
-      <span className="text-sm text-neutral-300 group-hover:text-white transition-colors">{label}</span>
+      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${
-          checked ? "bg-amber-500" : "bg-neutral-700"
-        }`}
+        className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-primary" : "bg-secondary"}`}
       >
-        <span
-          className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
+        <span className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0"}`} />
       </button>
     </label>
   )
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            href="/dashboard"
-            className="p-2 rounded-lg hover:bg-white/5 text-neutral-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Settings</h1>
-            <p className="text-sm text-neutral-500 mt-1">Manage your STAGEONE preferences</p>
-          </div>
-        </div>
+    <div className="flex h-screen overflow-hidden bg-background">
+      <AppSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />
 
-        <div className="space-y-4">
-          <SettingSection
-            icon={User}
-            title="Profile"
-            description="Your personal information"
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Header */}
+        <header className="flex h-14 items-center gap-4 border-b border-border/50 bg-background/80 backdrop-blur-xl px-6 shrink-0">
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-neutral-500 uppercase tracking-wider">Display Name</label>
-                <input
-                  type="text"
-                  value={settings.displayName}
-                  onChange={(e) => setSettings({ ...settings, displayName: e.target.value })}
-                  placeholder="Enter your name"
-                  className="w-full mt-1.5 px-4 py-2.5 rounded-lg bg-black/50 border border-white/10 text-white placeholder:text-neutral-600 focus:outline-none focus:border-amber-500/50 transition-colors"
-                />
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </button>
+          <div className="h-4 w-px bg-border" />
+          <span className="text-sm font-medium text-foreground">Settings</span>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-2xl mx-auto space-y-4">
+
+            {/* Profile */}
+            <SettingSection icon={User} title="Profile" description="Your account information">
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Full Name</label>
+                  <div className="mt-1.5 px-4 py-2.5 rounded-lg bg-secondary/30 border border-border text-foreground text-sm">
+                    {user?.name ?? "—"}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Email Address</label>
+                  <div className="mt-1.5 px-4 py-2.5 rounded-lg bg-secondary/30 border border-border text-foreground text-sm">
+                    {user?.email ?? "—"}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Member Since</label>
+                  <div className="mt-1.5 px-4 py-2.5 rounded-lg bg-secondary/30 border border-border text-muted-foreground text-sm">
+                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-neutral-500 uppercase tracking-wider">Email</label>
-                <input
-                  type="email"
-                  value={settings.email}
-                  onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                  placeholder="your@email.com"
-                  className="w-full mt-1.5 px-4 py-2.5 rounded-lg bg-black/50 border border-white/10 text-white placeholder:text-neutral-600 focus:outline-none focus:border-amber-500/50 transition-colors"
-                />
-              </div>
-            </div>
-          </SettingSection>
+            </SettingSection>
 
-          <SettingSection
-            icon={Bell}
-            title="Notifications"
-            description="Control your notification preferences"
-          >
-            <div className="space-y-3">
-              <Toggle
-                checked={settings.notifications.emailUpdates}
-                onChange={(checked) => setSettings({
-                  ...settings,
-                  notifications: { ...settings.notifications, emailUpdates: checked }
-                })}
-                label="Email updates about new features"
-              />
-              <Toggle
-                checked={settings.notifications.projectAlerts}
-                onChange={(checked) => setSettings({
-                  ...settings,
-                  notifications: { ...settings.notifications, projectAlerts: checked }
-                })}
-                label="Project completion alerts"
-              />
-            </div>
-          </SettingSection>
+            {/* Notifications */}
+            <SettingSection icon={Bell} title="Notifications" description="Control your notification preferences">
+              <Toggle checked={emailUpdates} onChange={setEmailUpdates} label="Email updates about new features" />
+            </SettingSection>
 
-          <SettingSection
-            icon={Palette}
-            title="Preferences"
-            description="Customize your experience"
-          >
-            <div className="space-y-3">
+            {/* Preferences */}
+            <SettingSection icon={Palette} title="Preferences" description="Customize your experience">
               <div>
-                <label className="text-xs text-neutral-500 uppercase tracking-wider">Default Output Length</label>
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Default Output Length</label>
                 <div className="flex gap-2 mt-2">
-                  {(["concise", "detailed"] as const).map((option) => (
+                  {(["concise", "detailed"] as const).map(opt => (
                     <button
-                      key={option}
-                      onClick={() => setSettings({
-                        ...settings,
-                        preferences: { ...settings.preferences, defaultOutputLength: option }
-                      })}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        settings.preferences.defaultOutputLength === option
-                          ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                          : "bg-white/5 text-neutral-400 border border-white/10 hover:border-white/20"
+                      key={opt}
+                      onClick={() => setOutputLength(opt)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
+                        outputLength === opt
+                          ? "bg-primary/10 text-primary border-primary/40"
+                          : "bg-secondary/20 text-muted-foreground border-border hover:border-primary/30"
                       }`}
                     >
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                      {opt.charAt(0).toUpperCase() + opt.slice(1)}
                     </button>
                   ))}
                 </div>
               </div>
-              <Toggle
-                checked={settings.preferences.autoSave}
-                onChange={(checked) => setSettings({
-                  ...settings,
-                  preferences: { ...settings.preferences, autoSave: checked }
-                })}
-                label="Auto-save projects"
-              />
-            </div>
-          </SettingSection>
+            </SettingSection>
 
-          <SettingSection
-            icon={Database}
-            title="Data Management"
-            description="Manage your stored data"
-          >
-            <div className="flex items-center justify-between p-4 rounded-lg bg-black/30 border border-white/5">
-              <div>
-                <p className="text-sm text-white">Project History</p>
-                <p className="text-xs text-neutral-500 mt-0.5">
-                  {projectCount} project{projectCount !== 1 ? "s" : ""} saved locally
-                </p>
-              </div>
-              <button
-                onClick={handleClearHistory}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40 transition-all text-sm"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Clear
-              </button>
-            </div>
-          </SettingSection>
-
-          <SettingSection
-            icon={Key}
-            title="API Configuration"
-            description="Manage API connections"
-          >
-            <div className="p-4 rounded-lg bg-black/30 border border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            {/* Data */}
+            <SettingSection icon={Database} title="Data Management" description="Your saved projects and data">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/20 border border-border/50">
                 <div>
-                  <p className="text-sm text-white">NVIDIA API</p>
-                  <p className="text-xs text-neutral-500">Connected and active</p>
+                  <p className="text-sm font-medium text-foreground">Saved Projects</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {projectCount === null ? "Loading…" : `${projectCount} project${projectCount !== 1 ? "s" : ""} in your account`}
+                  </p>
                 </div>
               </div>
-            </div>
-          </SettingSection>
-        </div>
+            </SettingSection>
 
-        <motion.div 
-          className="mt-8 flex justify-end"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-black font-semibold hover:from-amber-400 hover:to-amber-500 transition-all"
-          >
-            {saved ? (
-              <>
-                <Check className="w-4 h-4" />
-                Saved
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Changes
-              </>
-            )}
-          </button>
-        </motion.div>
+            {/* API Status */}
+            <SettingSection icon={Key} title="API Configuration" description="Connected AI services">
+              <div className="p-4 rounded-lg bg-secondary/20 border border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">NVIDIA NIM API</p>
+                    <p className="text-xs text-muted-foreground">Connected — Llama 3.1 70B Instruct</p>
+                  </div>
+                </div>
+              </div>
+            </SettingSection>
+
+            {/* Sign Out */}
+            <SettingSection icon={LogOut} title="Account" description="Session management">
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all text-sm font-medium"
+              >
+                <Trash2 className="h-4 w-4" />
+                Sign Out
+              </button>
+            </SettingSection>
+
+            {/* Save */}
+            <motion.div className="flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <button
+                onClick={handleSave}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+              >
+                {saved ? <><Check className="h-4 w-4" /> Saved</> : <><Save className="h-4 w-4" /> Save Preferences</>}
+              </button>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   )

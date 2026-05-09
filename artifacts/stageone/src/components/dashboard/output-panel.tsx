@@ -59,6 +59,7 @@ interface OutputPanelProps {
   data: BusinessIntelligence | null
   isLoading: boolean
   streamingText?: string
+  onGenerateWebsite?: () => void
 }
 
 function MetricGauge({
@@ -305,7 +306,7 @@ function EmptyState() {
   )
 }
 
-export function OutputPanel({ data, isLoading, streamingText }: OutputPanelProps) {
+export function OutputPanel({ data, isLoading, streamingText, onGenerateWebsite }: OutputPanelProps) {
   if (isLoading) {
     return <LoadingState streamingText={streamingText} />
   }
@@ -340,10 +341,21 @@ export function OutputPanel({ data, isLoading, streamingText }: OutputPanelProps
                 {data.industry} Intelligence
               </h2>
             </div>
-            <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                {data.industry}
-              </span>
+            <div className="flex items-center gap-2">
+              {onGenerateWebsite && (
+                <button
+                  onClick={onGenerateWebsite}
+                  className="flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Globe className="h-3.5 w-3.5" />
+                  Generate Website
+                </button>
+              )}
+              <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                  {data.industry}
+                </span>
+              </div>
             </div>
           </motion.div>
 

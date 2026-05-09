@@ -1,14 +1,18 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth-context";
+import { ProtectedRoute } from "@/lib/protected-route";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
 import DashboardPage from "@/pages/dashboard";
+import ProjectPage from "@/pages/project";
 import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+});
 
 function Router() {
   return (
@@ -16,14 +20,23 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
-      <Route path="/dashboard" component={DashboardPage} />
-      <Route path="/settings" component={SettingsPage} />
+      <Route path="/dashboard">
+        <ProtectedRoute><DashboardPage /></ProtectedRoute>
+      </Route>
+      <Route path="/projects/:id">
+        {(params) => (
+          <ProtectedRoute><ProjectPage id={params.id} /></ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute><SettingsPage /></ProtectedRoute>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -34,5 +47,3 @@ function App() {
     </QueryClientProvider>
   );
 }
-
-export default App;
