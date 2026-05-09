@@ -198,7 +198,7 @@ export default function ProjectPage({ id }: ProjectPageProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className={`flex-1 min-h-0 ${tab === "website" ? "overflow-hidden flex flex-col" : "overflow-y-auto p-6"}`}>
           <AnimatePresence mode="wait">
             {tab === "analysis" ? (
               <motion.div key="analysis" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -210,7 +210,7 @@ export default function ProjectPage({ id }: ProjectPageProps) {
                 />
               </motion.div>
             ) : (
-              <motion.div key="website" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div key="website" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col flex-1 min-h-0">
                 <WebsitePanel
                   businessIdea={project.businessIdea}
                   businessIntelligence={biData}
