@@ -9,6 +9,7 @@ import DashboardPage from "@/pages/dashboard";
 import ProjectPage from "@/pages/project";
 import SettingsPage from "@/pages/settings";
 import WebsiteGeneratorPage from "@/pages/website-generator";
+import ChatbotGeneratorPage from "@/pages/chatbot-generator";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -34,6 +35,9 @@ function Router() {
       </Route>
       <Route path="/website-generator">
         <ProtectedRoute><WebsiteGeneratorPage /></ProtectedRoute>
+      </Route>
+      <Route path="/chatbot-generator">
+        <ProtectedRoute><ChatbotGeneratorPage /></ProtectedRoute>
       </Route>
       <Route component={NotFound} />
     </Switch>

@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  LayoutDashboard,
   FolderOpen,
   Sparkles,
   Settings,
@@ -10,6 +9,7 @@ import {
   ChevronRight,
   Globe,
   BarChart3,
+  Bot,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 
@@ -21,6 +21,7 @@ interface AppSidebarProps {
 const NAV = [
   { href: "/dashboard?tab=new", icon: BarChart3, label: "Business Intelligence" },
   { href: "/website-generator", icon: Globe, label: "Website Generator" },
+  { href: "/chatbot-generator", icon: Bot, label: "AI Chatbot Generator" },
   { href: "/dashboard?tab=projects", icon: FolderOpen, label: "Projects" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ]
@@ -44,7 +45,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 64 : 240 }}
+      animate={{ width: collapsed ? 64 : 248 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
       className="flex h-full flex-col border-r border-white/5 bg-[#080808] relative shrink-0"
     >
@@ -96,12 +97,12 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       {/* Nav section label */}
       {!collapsed && (
         <div className="px-4 pt-4 pb-1">
-          <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Modules</p>
+          <p className="text-[9px] font-semibold text-muted-foreground/50 uppercase tracking-widest">Modules</p>
         </div>
       )}
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 px-2 py-1">
+      <nav className="flex-1 space-y-0.5 px-2 py-1 overflow-y-auto">
         {NAV.map(({ href, icon: Icon, label }) => {
           const active = isActive(href)
           return (
@@ -121,17 +122,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -6 }}
                       transition={{ duration: 0.12 }}
-                      className="truncate"
+                      className="truncate flex-1"
                     >
                       {label}
                     </motion.span>
                   )}
                 </AnimatePresence>
                 {active && !collapsed && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(212,175,55,0.6)]"
-                  />
+                  <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(212,175,55,0.6)] shrink-0" />
                 )}
               </div>
             </Link>

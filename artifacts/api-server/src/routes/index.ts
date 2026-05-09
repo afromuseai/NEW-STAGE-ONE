@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import generateRouter from "./generate";
 import generateWebsiteRouter from "./generate-website";
+import generateChatbotRouter from "./generate-chatbot";
 import authRouter from "./auth";
 import projectsRouter from "./projects";
 
@@ -12,5 +13,6 @@ router.use(authRouter);
 router.use(projectsRouter);
 router.use(generateRouter);
 router.use(generateWebsiteRouter);
+router.use(generateChatbotRouter);
 
 export default router;
