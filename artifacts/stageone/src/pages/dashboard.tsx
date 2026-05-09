@@ -1,40 +1,46 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { InputPanel } from "@/components/dashboard/input-panel"
 import { OutputPanel, type BusinessIntelligence } from "@/components/dashboard/output-panel"
 import { Sidebar, type Project } from "@/components/dashboard/sidebar"
 
+interface SavedProject extends Project {
+  cachedResult?: BusinessIntelligence
+}
+
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<BusinessIntelligence | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<SavedProject[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [currentIdea, setCurrentIdea] = useState("")
   const [streamingText, setStreamingText] = useState("")
+  const projectsRef = useRef<SavedProject[]>([])
 
   useEffect(() => {
     const savedProjects = localStorage.getItem("stageone-projects")
     if (savedProjects) {
       try {
-        setProjects(JSON.parse(savedProjects))
+        const parsed = JSON.parse(savedProjects)
+        setProjects(parsed)
+        projectsRef.current = parsed
       } catch {
         localStorage.removeItem("stageone-projects")
       }
     }
   }, [])
 
-  const saveProjects = useCallback((newProjects: Project[]) => {
+  const persistProjects = useCallback((newProjects: SavedProject[]) => {
+    projectsRef.current = newProjects
     setProjects(newProjects)
     localStorage.setItem("stageone-projects", JSON.stringify(newProjects))
   }, [])
 
-  const handleGenerate = useCallback(async (idea: string) => {
+  const handleGenerate = useCallback(async (idea: string, projectId?: string) => {
     setIsLoading(true)
     setResults(null)
     setError(null)
-    setCurrentIdea(idea)
     setStreamingText("")
 
     try {
@@ -62,35 +68,24 @@ export default function DashboardPage() {
           const { done, value } = await reader.read()
           if (done) break
 
-          // Prepend carryover before processing new chunk
           const chunk = lineCarryover + decoder.decode(value, { stream: true })
           const lines = chunk.split("\n")
-
-          // Last element may be incomplete — carry it forward
           lineCarryover = lines.pop() ?? ""
 
           for (const line of lines) {
             if (!line.startsWith("data: ")) continue
-
             const data = line.slice(6).trim()
             if (!data) continue
 
             try {
               const parsed = JSON.parse(data)
-
-              if (parsed.error) {
-                streamError = parsed.error
-                break
-              }
-
+              if (parsed.error) { streamError = parsed.error; break }
               if (parsed.done && parsed.data) {
                 finalData = parsed.data as BusinessIntelligence
               } else if (typeof parsed.content === "string") {
                 setStreamingText(prev => prev + parsed.content)
               }
-            } catch {
-              // Incomplete JSON in this line — skip
-            }
+            } catch { /* incomplete JSON fragment */ }
           }
 
           if (streamError) break
@@ -99,68 +94,68 @@ export default function DashboardPage() {
         reader.releaseLock()
       }
 
-      if (streamError) {
-        throw new Error(streamError)
-      }
+      if (streamError) throw new Error(streamError)
 
       if (finalData) {
         setResults(finalData)
 
-        const newProject: Project = {
-          id: crypto.randomUUID(),
-          title: idea.length > 50 ? idea.slice(0, 50) + "..." : idea,
-          businessIdea: idea,
-          createdAt: new Date().toISOString(),
-          metrics: finalData.metrics
-            ? {
-                businessType: finalData.industry,
-                scalabilityScore: finalData.metrics.revenueScalability,
-              }
-            : undefined,
+        if (projectId) {
+          // Update cached result on existing project
+          const updated = projectsRef.current.map(p =>
+            p.id === projectId ? { ...p, cachedResult: finalData! } : p
+          )
+          persistProjects(updated)
+        } else {
+          // Create new project entry with cached result
+          const newProject: SavedProject = {
+            id: crypto.randomUUID(),
+            title: idea.length > 50 ? idea.slice(0, 50) + "..." : idea,
+            businessIdea: idea,
+            createdAt: new Date().toISOString(),
+            cachedResult: finalData,
+            metrics: {
+              businessType: finalData.industry,
+              scalabilityScore: finalData.metrics.revenueScalability,
+            },
+          }
+          const updated = [newProject, ...projectsRef.current].slice(0, 20)
+          persistProjects(updated)
+          setActiveProjectId(newProject.id)
         }
-
-        setProjects(prev => {
-          const updated = [newProject, ...prev].slice(0, 20)
-          localStorage.setItem("stageone-projects", JSON.stringify(updated))
-          return updated
-        })
-        setActiveProjectId(newProject.id)
       } else {
         throw new Error("No analysis data received — please try again")
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred"
-      setError(message)
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
       setIsLoading(false)
       setStreamingText("")
     }
-  }, [])
+  }, [persistProjects])
 
-  const handleSelectProject = useCallback(async (project: Project) => {
+  const handleSelectProject = useCallback((project: SavedProject) => {
     setActiveProjectId(project.id)
-    setCurrentIdea(project.businessIdea)
-    await handleGenerate(project.businessIdea)
+    setError(null)
+    // Restore cached result if available — no re-generation needed
+    if (project.cachedResult) {
+      setResults(project.cachedResult)
+    } else {
+      handleGenerate(project.businessIdea, project.id)
+    }
   }, [handleGenerate])
 
   const handleNewProject = useCallback(() => {
     setActiveProjectId(null)
-    setCurrentIdea("")
     setResults(null)
     setError(null)
     setStreamingText("")
   }, [])
 
   const handleDeleteProject = useCallback((id: string) => {
-    setProjects(prev => {
-      const updated = prev.filter(p => p.id !== id)
-      localStorage.setItem("stageone-projects", JSON.stringify(updated))
-      return updated
-    })
-    if (activeProjectId === id) {
-      handleNewProject()
-    }
-  }, [activeProjectId, handleNewProject])
+    const updated = projectsRef.current.filter(p => p.id !== id)
+    persistProjects(updated)
+    if (activeProjectId === id) handleNewProject()
+  }, [activeProjectId, handleNewProject, persistProjects])
 
   return (
     <div className="flex min-h-screen bg-background">
