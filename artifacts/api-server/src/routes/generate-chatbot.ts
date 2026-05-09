@@ -222,6 +222,70 @@ function extractJson(raw: string): unknown {
   return JSON.parse(clean);
 }
 
+// POST /api/generate/chatbot/message — real-time NVIDIA-powered chat reply
+router.post("/generate/chatbot/message", requireAuth, async (req, res): Promise<void> => {
+  try {
+    const { message, systemPrompt: botSystemPrompt, history = [] } = req.body;
+    if (!message?.trim()) { res.status(400).json({ error: "message is required" }); return; }
+    if (!NVIDIA_API_KEY) { res.status(500).json({ error: "API key not configured" }); return; }
+
+    const messages = [
+      { role: "system", content: botSystemPrompt || "You are a helpful AI assistant. Be concise and friendly." },
+      ...history.slice(-8).map((m: { role: string; text: string }) => ({
+        role: m.role === "bot" ? "assistant" : "user",
+        content: m.text,
+      })),
+      { role: "user", content: message.trim() },
+    ];
+
+    const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${NVIDIA_API_KEY}` },
+      body: JSON.stringify({
+        model: "meta/llama-3.1-70b-instruct",
+        messages,
+        temperature: 0.7,
+        max_tokens: 300,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) { res.status(500).json({ error: "NVIDIA API error" }); return; }
+    if (!response.body) { res.status(500).json({ error: "No response body" }); return; }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const decoder = new TextDecoder();
+    const reader = response.body.getReader();
+    let carry = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = carry + decoder.decode(value, { stream: true });
+      const lines = chunk.split("\n");
+      carry = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const data = line.slice(6).trim();
+        if (data === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        } catch { /* fragment */ }
+      }
+    }
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    res.end();
+  } catch (error) {
+    req.log.error({ error }, "Chatbot message error");
+    if (!res.headersSent) res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/generate/chatbot", requireAuth, async (req, res): Promise<void> => {
   try {
     const { businessDescription, chatbotType = "Customer Support", tone = "Professional", industry = "SaaS" } = req.body;

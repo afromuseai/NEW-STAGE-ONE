@@ -107,6 +107,7 @@ export default function ChatbotGeneratorPage() {
   const [chatInput, setChatInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const chatHistoryRef = useRef<ChatMessage[]>([])
 
   // Auto-scroll chat
   useEffect(() => {
@@ -134,39 +135,66 @@ export default function ChatbotGeneratorPage() {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!data || isTyping) return
-    setMessages(m => [...m, { role: "user", text, id: ++msgId }])
+    const userMsg: ChatMessage = { role: "user", text, id: ++msgId }
+    const currentHistory = chatHistoryRef.current.slice(-8)
+    setMessages(prev => {
+      chatHistoryRef.current = [...prev, userMsg]
+      return [...prev, userMsg]
+    })
     setQuickReplies([])
     setIsTyping(true)
-    await new Promise(r => setTimeout(r, 1200 + Math.random() * 800))
 
-    // Smart response selection from generated data
-    const lower = text.toLowerCase()
-    let response = ""
-    const supportResponses = data.conversationFlows.support?.responses ?? {}
-    for (const [key, val] of Object.entries(supportResponses)) {
-      if (lower.includes(key.toLowerCase())) { response = val; break }
-    }
-    if (!response) {
-      if (lower.includes("price") || lower.includes("cost") || lower.includes("plan")) {
-        response = supportResponses["pricing"] ?? data.conversationFlows.leadCapture.steps[0]?.bot ?? data.systemPrompt.fallbacks[0]
-      } else if (lower.includes("help") || lower.includes("issue") || lower.includes("problem")) {
-        response = supportResponses["technical"] ?? data.conversationFlows.escalation.botMessage
-      } else if (lower.includes("bye") || lower.includes("thanks") || lower.includes("done")) {
-        response = data.conversationFlows.closing.botMessage
-        setIsTyping(false)
-        setMessages(m => [...m, { role: "bot", text: response, id: ++msgId }])
-        return
-      } else {
-        response = data.systemPrompt.fallbacks[Math.floor(Math.random() * data.systemPrompt.fallbacks.length)]
+    const botId = ++msgId
+    let streamed = ""
+
+    try {
+      const res = await fetch("/api/generate/chatbot/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          message: text,
+          systemPrompt: data.systemPrompt.main,
+          history: currentHistory.slice(-8),
+        }),
+      })
+
+      if (!res.ok || !res.body) throw new Error("Request failed")
+
+      setIsTyping(false)
+      setMessages(m => [...m, { role: "bot", text: "", id: botId }])
+
+      const reader = res.body.getReader()
+      const dec = new TextDecoder()
+      let carry = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = carry + dec.decode(value, { stream: true })
+        const lines = chunk.split("\n")
+        carry = lines.pop() ?? ""
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue
+          try {
+            const msg = JSON.parse(line.slice(6))
+            if (msg.content) {
+              streamed += msg.content
+              setMessages(m => m.map(x => x.id === botId ? { ...x, text: streamed } : x))
+            }
+          } catch { /* fragment */ }
+        }
       }
+    } catch {
+      // Fallback to local response on network error
+      setIsTyping(false)
+      const fallback = data.systemPrompt.fallbacks?.[0] ?? "I'm here to help! Could you clarify what you need?"
+      setMessages(m => [...m, { role: "bot", text: fallback, id: botId }])
     }
 
-    setIsTyping(false)
-    setMessages(m => [...m, { role: "bot", text: response, id: ++msgId }])
-    // New quick replies from suggested prompts (filtered)
     const fresh = (data.suggestedPrompts ?? []).filter(p => p !== text).slice(0, 3)
     setQuickReplies(fresh)
-  }, [data, isTyping])
+  }, [data, isTyping, chatHistoryRef])
 
   const handleSendInput = () => {
     if (chatInput.trim()) { sendMessage(chatInput.trim()); setChatInput("") }
