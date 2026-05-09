@@ -10,6 +10,7 @@ import ProjectPage from "@/pages/project";
 import SettingsPage from "@/pages/settings";
 import WebsiteGeneratorPage from "@/pages/website-generator";
 import ChatbotGeneratorPage from "@/pages/chatbot-generator";
+import AutomationBuilderPage from "@/pages/automation-builder";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -38,6 +39,9 @@ function Router() {
       </Route>
       <Route path="/chatbot-generator">
         <ProtectedRoute><ChatbotGeneratorPage /></ProtectedRoute>
+      </Route>
+      <Route path="/automation-builder">
+        <ProtectedRoute><AutomationBuilderPage /></ProtectedRoute>
       </Route>
       <Route component={NotFound} />
     </Switch>

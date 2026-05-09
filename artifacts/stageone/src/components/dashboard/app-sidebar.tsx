@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter"
 import { motion, AnimatePresence } from "framer-motion"
+import stageoneIcon from "@/assets/stageone-icon.png"
 import {
   FolderOpen,
   Sparkles,
@@ -10,6 +11,7 @@ import {
   Globe,
   BarChart3,
   Bot,
+  Workflow,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 
@@ -22,6 +24,7 @@ const NAV = [
   { href: "/dashboard?tab=new", icon: BarChart3, label: "Business Intelligence" },
   { href: "/website-generator", icon: Globe, label: "Website Generator" },
   { href: "/chatbot-generator", icon: Bot, label: "AI Chatbot Generator" },
+  { href: "/automation-builder", icon: Workflow, label: "Automation Builder" },
   { href: "/dashboard?tab=projects", icon: FolderOpen, label: "Projects" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ]
@@ -60,8 +63,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               transition={{ duration: 0.15 }}
               className="flex items-center gap-2.5"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary shadow-[0_0_12px_rgba(212,175,55,0.4)]">
-                <span className="text-xs font-black text-primary-foreground tracking-tight">S1</span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black shadow-[0_0_12px_rgba(212,175,55,0.4)]">
+                <img src={stageoneIcon} alt="STAGEONE" className="h-6 w-6 object-contain" />
               </div>
               <div>
                 <span className="text-sm font-black text-foreground tracking-tight">STAGEONE</span>
@@ -71,8 +74,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           )}
         </AnimatePresence>
         {collapsed && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary mx-auto shadow-[0_0_12px_rgba(212,175,55,0.3)]">
-            <span className="text-xs font-black text-primary-foreground">S1</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black mx-auto shadow-[0_0_12px_rgba(212,175,55,0.3)]">
+            <img src={stageoneIcon} alt="STAGEONE" className="h-6 w-6 object-contain" />
           </div>
         )}
         {!collapsed && (
